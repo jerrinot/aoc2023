@@ -10,10 +10,14 @@ public class DayOne {
     private static final int NO_MATCH = -1;
     private static final int MATCHER_EXHAUSTED = -2;
 
+    private static String reverse(String s) {
+        return new StringBuilder(s).reverse().toString();
+    }
+
     private static String[] reverse(String[] numbers) {
         String[] res = new String[numbers.length];
         for (int i = 0; i < numbers.length; i++) {
-            res[i] = new StringBuilder(numbers[i]).reverse().toString();
+            res[i] = reverse(numbers[i]);
         }
         return res;
     }
@@ -55,7 +59,7 @@ public class DayOne {
         List<SingleMatcher> matchers = new ArrayList<>();
 
         int push(char c, String[] candidates) {
-            addMatcher();
+            addMatcherIfNeeded();
             Iterator<SingleMatcher> iterator = matchers.iterator();
             while (iterator.hasNext()) {
                 SingleMatcher matcher = iterator.next();
@@ -72,7 +76,7 @@ public class DayOne {
             return NO_MATCH;
         }
 
-        private void addMatcher() {
+        private void addMatcherIfNeeded() {
             if (pool.isEmpty()) {
                 matchers.add(new SingleMatcher());
             } else {
@@ -112,8 +116,7 @@ public class DayOne {
             if (firstDigit < 1) {
                 continue;
             }
-            int lastDigit = firstDigit(new StringBuilder(s).reverse().toString(), NUMBERS_REVERSED, matcher);
-//            System.out.println(firstDigit + " " + lastDigit);
+            int lastDigit = firstDigit(reverse(s), NUMBERS_REVERSED, matcher);
             int number = 10 * firstDigit + lastDigit;
             sum += number;
         }
