@@ -55,40 +55,39 @@ public class DayOne {
     }
 
     static class MultiMatcher {
-        List<SingleMatcher> pool = new ArrayList<>();
-        List<SingleMatcher> matchers = new ArrayList<>();
+        private final List<SingleMatcher> matchers = new ArrayList<>();
+        private final BitSet pooled = new BitSet();
 
         int push(char c, String[] candidates) {
-            addMatcherIfNeeded();
-            Iterator<SingleMatcher> iterator = matchers.iterator();
-            while (iterator.hasNext()) {
-                SingleMatcher matcher = iterator.next();
+            addMatcher();
+            for (int i = 0; i < matchers.size(); i++) {
+                if (pooled.get(i)) {
+                    continue;
+                }
+                SingleMatcher matcher = matchers.get(i);
                 int match = matcher.push(c, candidates);
                 if (match > 0) {
                     return match;
                 }
                 if (match == MATCHER_EXHAUSTED) {
-                    iterator.remove();
-                    matcher.reset();
-                    pool.add(matcher);
+                    pooled.set(i);
                 }
             }
             return NO_MATCH;
         }
 
-        private void addMatcherIfNeeded() {
-            if (pool.isEmpty()) {
+        private void addMatcher() {
+            int i = pooled.nextSetBit(0);
+            if (i == -1) {
                 matchers.add(new SingleMatcher());
             } else {
-                SingleMatcher matcher = pool.remove(pool.size() - 1);
-                matcher.reset();
-                matchers.add(matcher);
+                matchers.get(i).reset();
+                pooled.clear(i);
             }
         }
 
         void reset() {
-            pool.addAll(matchers);
-            matchers.clear();
+            pooled.set(0, matchers.size());
         }
     }
 
