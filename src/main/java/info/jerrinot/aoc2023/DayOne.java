@@ -2,13 +2,13 @@ package info.jerrinot.aoc2023;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.BitSet;
-import java.util.List;
+import java.util.*;
 
 public class DayOne {
     private static final String[] NUMBERS = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine"};
     private static final String[] NUMBERS_REVERSED = reverse(NUMBERS);
+    private static final int NO_MATCH = -1;
+    private static final int MATCHER_EXHAUSTED = -2;
 
     private static String[] reverse(String[] numbers) {
         String[] res = new String[numbers.length];
@@ -18,7 +18,7 @@ public class DayOne {
         return res;
     }
 
-    static class Matcher {
+    static class SingleMatcher {
         private int pos;
         private final BitSet blackList = new BitSet();
 
@@ -36,59 +36,84 @@ public class DayOne {
                     blackList.set(i);
                 }
             }
+
+            if (blackList.cardinality() == candidates.length) {
+                return MATCHER_EXHAUSTED;
+            }
             pos++;
-            return -1;
+            return NO_MATCH;
+        }
+
+        void reset() {
+            pos = 0;
+            blackList.clear();
         }
     }
 
+    static class MultiMatcher {
+        List<SingleMatcher> pool = new ArrayList<>();
+        List<SingleMatcher> matchers = new ArrayList<>();
 
-    private static int firstDigit(String s) {
-        List<Matcher> matchers = new ArrayList<>();
+        int push(char c, String[] candidates) {
+            addMatcher();
+            Iterator<SingleMatcher> iterator = matchers.iterator();
+            while (iterator.hasNext()) {
+                SingleMatcher matcher = iterator.next();
+                int match = matcher.push(c, candidates);
+                if (match > 0) {
+                    return match;
+                }
+                if (match == MATCHER_EXHAUSTED) {
+                    iterator.remove();
+                    matcher.reset();
+                    pool.add(matcher);
+                }
+            }
+            return NO_MATCH;
+        }
+
+        private void addMatcher() {
+            if (pool.isEmpty()) {
+                matchers.add(new SingleMatcher());
+            } else {
+                SingleMatcher matcher = pool.remove(pool.size() - 1);
+                matcher.reset();
+                matchers.add(matcher);
+            }
+        }
+
+        void reset() {
+            pool.addAll(matchers);
+            matchers.clear();
+        }
+    }
+
+    private static int firstDigit(String s, String[] candidates, MultiMatcher matcher) {
+        matcher.reset();
         for (int i = 0; i < s.length(); i++) {
-            matchers.add(new Matcher());
             char c = s.charAt(i);
             if (Character.isDigit(c)) {
                 return Character.getNumericValue(c);
             }
-            for (Matcher matcher : matchers) {
-                int match = matcher.push(c, NUMBERS);
-                if (match != -1) {
-                    return match;
-                }
+            int match = matcher.push(c, candidates);
+            if (match > 0) {
+                return match;
             }
         }
-        return -1;
-    }
-
-    private static int lastDigit(String s) {
-        List<Matcher> matchers = new ArrayList<>();
-        for (int i = s.length() - 1; i >= 0; i--) {
-            matchers.add(new Matcher());
-            char c = s.charAt(i);
-            if (Character.isDigit(c)) {
-                return Character.getNumericValue(c);
-            }
-            for (Matcher matcher : matchers) {
-                int match = matcher.push(c, NUMBERS_REVERSED);
-                if (match != -1) {
-                    return match;
-                }
-            }
-        }
-        return -1;
+        return NO_MATCH;
     }
 
     public static void main(String[] args) throws Exception {
         List<String> strings = Files.readAllLines(Path.of(DayOne.class.getClassLoader().getResource("day1.txt").toURI()));
         int sum = 0;
+        MultiMatcher matcher = new MultiMatcher();
         for (String s : strings) {
-            int firstDigit = firstDigit(s);
-            if (firstDigit == -1) {
-                System.out.println("No digit found: " + s);
+            int firstDigit = firstDigit(s, NUMBERS, matcher);
+            if (firstDigit < 1) {
                 continue;
             }
-            int lastDigit = lastDigit(s);
-            System.out.println(firstDigit + " " + lastDigit);
+            int lastDigit = firstDigit(new StringBuilder(s).reverse().toString(), NUMBERS_REVERSED, matcher);
+//            System.out.println(firstDigit + " " + lastDigit);
             int number = 10 * firstDigit + lastDigit;
             sum += number;
         }
