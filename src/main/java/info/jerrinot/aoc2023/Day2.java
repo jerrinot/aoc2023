@@ -96,6 +96,7 @@ public class Day2 {
             acc.add(token, val);
             token = tokenizer.nextToken();
             if (token == null) {
+                // EOL
                 break;
             } else if (token.equals(";")) {
                 acc.gameDone();
