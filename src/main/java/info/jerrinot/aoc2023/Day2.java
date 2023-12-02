@@ -48,7 +48,7 @@ public class Day2 {
         private final int[] max = new int[COLOR_SIZE];
 
         void add(String name, int val) {
-            current[toCode(name)] += val;
+            current[toCode(name)] = val;
         }
 
         private static int toCode(String color) {
