@@ -17,20 +17,15 @@ public class Day2 {
 
     public static void main(String[] args) throws Exception {
         List<String> strings = Files.readAllLines(Path.of(DayOne.class.getClassLoader().getResource("2.txt").toURI()));
-        int part2 = 0;
-        int part1 = 0;
+        int part1 = 0, part2 = 0;
         Tokenizer tokenizer = new Tokenizer();
         GameAccumulator acc = new GameAccumulator();
         for (String s : strings) {
             acc.reset();
             tokenizer.of(s);
-            if (!("Game".equals(tokenizer.nextToken()))) {
-                throw new IllegalArgumentException("Expected 'game' token");
-            }
+            expectToken(tokenizer, "Game");
             int gameId = Integer.parseInt(tokenizer.nextToken());
-            if (!(":".equals(tokenizer.nextToken()))) {
-                throw new IllegalArgumentException("Expected ':' token");
-            }
+            expectToken(tokenizer, ":");
             int minPowers = getMinPowers(tokenizer, acc);
             part2 += Math.abs(minPowers);
             if (minPowers >= 0) {
@@ -39,6 +34,13 @@ public class Day2 {
         }
         System.out.println("Part1: " + part1);
         System.out.println("Part2: " + part2);
+    }
+
+    private static void expectToken(Tokenizer tokenizer, String expected) {
+        String token = tokenizer.nextToken();
+        if (!expected.equals(token)) {
+            throw new IllegalArgumentException("Expected '" + expected + "' token, got '" + token + "'");
+        }
     }
 
     static class GameAccumulator {
@@ -70,7 +72,7 @@ public class Day2 {
             Arrays.fill(max, 0);
         }
 
-        void nextGame() {
+        void gameDone() {
             for (int i = 0; i < COLOR_SIZE; i++) {
                 max[i] = Math.max(max[i], current[i]);
             }
@@ -96,13 +98,13 @@ public class Day2 {
             if (token == null) {
                 break;
             } else if (token.equals(";")) {
-                acc.nextGame();
+                acc.gameDone();
             } else if (!token.equals(",")) {
                 throw new IllegalArgumentException("Unexpected delimiter: " + token);
             }
             token = tokenizer.nextToken();
         }
-        acc.nextGame();
+        acc.gameDone();
         return acc.isGamePossible() ? acc.powers() : -acc.powers();
     }
 
@@ -128,7 +130,7 @@ public class Day2 {
             if (i == s.length()) {
                 return null;
             }
-            while (i < s.length() && s.charAt(i) != ' ' && !isDelim(s.charAt(i))) {
+            while (i < s.length() && !isDelim(s.charAt(i))) {
                 i++;
             }
             if (i == pos) {
@@ -145,7 +147,7 @@ public class Day2 {
         }
 
         private static boolean isDelim(char c) {
-            return c == ',' || c == ';' || c == ':';
+            return c == ',' || c == ';' || c == ':' || c == ' ';
         }
     }
 }
