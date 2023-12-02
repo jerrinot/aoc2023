@@ -16,7 +16,7 @@ public class Day2 {
     private static final int BLUE_LIMIT = 14;
 
     public static void main(String[] args) throws Exception {
-        List<String> strings = Files.readAllLines(Path.of(DayOne.class.getClassLoader().getResource("2.txt").toURI()));
+        List<String> strings = Files.readAllLines(Path.of(Day1.class.getClassLoader().getResource("2.txt").toURI()));
         int part1 = 0, part2 = 0;
         Tokenizer tokenizer = new Tokenizer();
         GameAccumulator acc = new GameAccumulator();

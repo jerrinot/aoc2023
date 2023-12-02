@@ -4,7 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-public class DayOne {
+public class Day1 {
     private static final String[] NUMBERS = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine"};
     private static final String[] NUMBERS_REVERSED = reverse(NUMBERS);
     private static final int NO_MATCH = -1;
@@ -107,7 +107,7 @@ public class DayOne {
     }
 
     public static void main(String[] args) throws Exception {
-        List<String> strings = Files.readAllLines(Path.of(DayOne.class.getClassLoader().getResource("day1.txt").toURI()));
+        List<String> strings = Files.readAllLines(Path.of(Day1.class.getClassLoader().getResource("day1.txt").toURI()));
         int sum = 0;
         MultiMatcher matcher = new MultiMatcher();
         for (String s : strings) {
