@@ -19,7 +19,7 @@ public class Day2 {
         List<String> strings = Files.readAllLines(Path.of(Day1.class.getClassLoader().getResource("2.txt").toURI()));
         int part1 = 0, part2 = 0;
         Tokenizer tokenizer = new Tokenizer();
-        GameAccumulator acc = new GameAccumulator();
+        GameState acc = new GameState();
         for (String s : strings) {
             acc.reset();
             tokenizer.of(s);
@@ -43,7 +43,7 @@ public class Day2 {
         }
     }
 
-    static class GameAccumulator {
+    static class GameState {
         private final int[] current = new int[COLOR_SIZE];
         private final int[] max = new int[COLOR_SIZE];
 
@@ -72,7 +72,7 @@ public class Day2 {
             Arrays.fill(max, 0);
         }
 
-        void gameDone() {
+        void setDone() {
             for (int i = 0; i < COLOR_SIZE; i++) {
                 max[i] = Math.max(max[i], current[i]);
             }
@@ -88,7 +88,7 @@ public class Day2 {
         }
     }
 
-    static int getMinPowers(Tokenizer tokenizer, GameAccumulator acc) {
+    static int getMinPowers(Tokenizer tokenizer, GameState acc) {
         String token = tokenizer.nextToken();
         while (token != null) {
             int val = Integer.parseInt(token);
@@ -99,13 +99,13 @@ public class Day2 {
                 // EOL
                 break;
             } else if (token.equals(";")) {
-                acc.gameDone();
+                acc.setDone();
             } else if (!token.equals(",")) {
                 throw new IllegalArgumentException("Unexpected delimiter: " + token);
             }
             token = tokenizer.nextToken();
         }
-        acc.gameDone();
+        acc.setDone();
         return acc.isGamePossible() ? acc.powers() : -acc.powers();
     }
 
