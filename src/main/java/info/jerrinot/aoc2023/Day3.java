@@ -2,108 +2,157 @@ package info.jerrinot.aoc2023;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.BitSet;
-import java.util.List;
+import java.util.*;
 
 public class Day3 {
     public static void main(String[] args) throws Exception {
         List<String> strings = Files.readAllLines(Path.of(Day1.class.getClassLoader().getResource("3.txt").toURI()));
-        SymbolMap map = new SymbolMap(strings.get(0).length(), strings.size());
+//        SymbolMap map = new SymbolMap(strings.get(0).length(), strings.size());
+//        for (int y = 0; y < strings.size(); y++) {
+//            String s = strings.get(y);
+//            for (int x = 0; x < s.length(); x++) {
+//                char c = s.charAt(x);
+//                if (isSymbolAt(c)) {
+//                    System.out.println("onSymbolAt(" + x + ", " + y + ");");
+//                    map.onSymbolAt(x, y);
+//                }
+//            }
+//        }
+//
+//        int sum = 0;
+//        for (int y = 0; y < strings.size(); y++) {
+//            String s = strings.get(y);
+//            sum += sumOfTouchingNumbers(map, y, s);
+//        }
+//        System.out.println("Part1: " + sum);
+
+        CountingMap countingMap = new CountingMap(strings.get(0).length(), strings.size());
         for (int y = 0; y < strings.size(); y++) {
             String s = strings.get(y);
             for (int x = 0; x < s.length(); x++) {
                 char c = s.charAt(x);
-                if (isSymbolAt(c)) {
+                if (isGearSymbol(c)) {
                     System.out.println("onSymbolAt(" + x + ", " + y + ");");
-                    map.onSymbolAt(x, y);
+                    countingMap.onSymbolAt(x, y);
                 }
             }
         }
-
-        int sum = 0;
         for (int y = 0; y < strings.size(); y++) {
             String s = strings.get(y);
-            sum += sumOfTouchingNumbers(map, y, s);
+            sumOfGears(countingMap, y, s);
         }
-        System.out.println("Part1: " + sum);
+        System.out.println("Part2: " + countingMap.sum());
     }
 
-    static int sumOfTouchingNumbers(SymbolMap map, int y, String line) {
-        int sum = 0;
-        boolean touching = false;
-        boolean parsing = false;
-        int currentNumber = 0;
+    static void sumOfGears(CountingMap map, int y, String line) {
         for (int x = 0; x < line.length(); x++) {
             char ch = line.charAt(x);
             if (Character.isDigit(ch)) {
-                touching = touching || map.isTouching(x, y);
-                if (!parsing) {
-                    parsing = true;
-                    currentNumber = Character.getNumericValue(ch);
-                } else {
-                    currentNumber = currentNumber * 10 + Character.getNumericValue(ch);
-                }
+                map.digit(x, y, ch);
             } else {
-                if (parsing) {
-                    if (touching) {
-                        sum += currentNumber;
-                    }
-                    parsing = false;
-                    touching = false;
-                }
+                map.nonDigitOrEOL();
             }
         }
-        if (parsing) {
-            if (touching) {
-                sum += currentNumber;
-            }
-        }
-        return sum;
+        map.nonDigitOrEOL();
     }
+
 
     static boolean isSymbolAt(char ch) {
         return ch != '.' && !Character.isDigit(ch);
     }
 
-    static class SymbolMap {
+    static boolean isGearSymbol(char ch) {
+        return ch == '*';
+    }
+
+    static class CountingMap {
         private final BitSet map = new BitSet();
+        private final BitSet touched = new BitSet();
         private final int maxX;
         private final int maxY;
+        private int currentNumber;
+        private final Map<Integer, Set<Integer>> touching = new HashMap<>();
 
-        SymbolMap(int maxX, int maxY) {
+        CountingMap(int maxX, int maxY) {
             this.maxX = maxX;
             this.maxY = maxY;
         }
 
-        void onSymbolAt(int x, int y) {
+        void nonDigitOrEOL() {
+            for (int i = touched.nextSetBit(0); i >= 0; i = touched.nextSetBit(i + 1)) {
+                Set<Integer> set = touching.computeIfAbsent(i, k -> new HashSet<>());
+                set.add(currentNumber);
+            }
+            currentNumber = 0;
+            touched.clear();
+        }
+
+        int sum() {
+            int sum = 0;
+            for (Map.Entry<Integer, Set<Integer>> entry : touching.entrySet()) {
+                if (entry.getValue().size() == 2) {
+                    // multiply
+                    sum += entry.getValue().stream().reduce(1, (a, b) -> a * b);
+                }
+            }
+            return sum;
+        }
+
+        void digit(int x, int y, char digit) {
+            currentNumber = currentNumber * 10 + Character.getNumericValue(digit);
+            int coords;
             if (x != 0) {
-                map.set(flattenCoords(x - 1, y));
+                coords = flattenCoords(x - 1, y);
+                if (map.get(coords)) {
+                    touched.set(coords);
+                }
                 if (y != 0) {
-                    map.set(flattenCoords(x - 1, y - 1));
+                    coords = flattenCoords(x - 1, y - 1);
+                    if (map.get(coords)) {
+                        touched.set(coords);
+                    }
                 }
                 if (y != maxY) {
-                    map.set(flattenCoords(x - 1, y + 1));
+                    coords = flattenCoords(x - 1, y + 1);
+                    if (map.get(coords)) {
+                        touched.set(coords);
+                    }
                 }
             }
             if (x != maxX) {
-                map.set(flattenCoords(x + 1, y));
+                coords = flattenCoords(x + 1, y);
+                if (map.get(coords)) {
+                    touched.set(coords);
+                }
                 if (y != 0) {
-                    map.set(flattenCoords(x + 1, y - 1));
+                    coords = flattenCoords(x + 1, y - 1);
+                    if (map.get(coords)) {
+                        touched.set(coords);
+                    }
                 }
                 if (y != maxY) {
-                    map.set(flattenCoords(x + 1, y + 1));
+                    coords = flattenCoords(x + 1, y + 1);
+                    if (map.get(coords)) {
+                        touched.set(coords);
+                    }
                 }
             }
             if (y != 0) {
-                map.set(flattenCoords(x, y - 1));
+                coords = flattenCoords(x, y - 1);
+                if (map.get(coords)) {
+                    touched.set(coords);
+                }
             }
             if (y != maxY) {
-                map.set(flattenCoords(x, y + 1));
+                coords = flattenCoords(x, y + 1);
+                if (map.get(coords)) {
+                    touched.set(coords);
+                }
             }
         }
 
-        boolean isTouching(int x, int y) {
-            return map.get(flattenCoords(x, y));
+        void onSymbolAt(int x, int y) {
+            map.set(flattenCoords(x, y));
         }
 
         int flattenCoords(int x, int y) {
