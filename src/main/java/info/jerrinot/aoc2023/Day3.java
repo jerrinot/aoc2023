@@ -26,7 +26,7 @@ public class Day3 {
 //        }
 //        System.out.println("Part1: " + sum);
 
-        CountingMap countingMap = new CountingMap(strings.get(0).length(), strings.size());
+        CountingMap countingMap = new CountingMap(strings.get(0).length());
         for (int y = 0; y < strings.size(); y++) {
             String s = strings.get(y);
             for (int x = 0; x < s.length(); x++) {
@@ -69,13 +69,11 @@ public class Day3 {
         private final BitSet map = new BitSet();
         private final BitSet touched = new BitSet();
         private final int maxX;
-        private final int maxY;
         private int currentNumber;
         private final Map<Integer, Set<Integer>> touching = new HashMap<>();
 
-        CountingMap(int maxX, int maxY) {
+        CountingMap(int maxX) {
             this.maxX = maxX + 2;
-            this.maxY = maxY + 2;
         }
 
         void nonDigitOrEOL() {
