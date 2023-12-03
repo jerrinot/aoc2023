@@ -56,10 +56,10 @@ public class Day3 {
 
     static class CountingMap {
         private final BitSet symbolMap = new BitSet(); // map of all symbols
-        private final BitSet touched = new BitSet(); // map of symbols touched by the currently parsed number
+        private final BitSet touchedByCurrent = new BitSet(); // map of symbols touched by the currently parsed number
         private final int width;
         private int currentNumber;
-        private final Map<Integer, List<Integer>> touching = new HashMap<>();  // key = symbol, value = numbers touching the symbol
+        private final Map<Integer, List<Integer>> touchedSymbols = new HashMap<>();  // key = symbol, value = numbers touching the symbol
 
         CountingMap(int maxX) {
             this.width = maxX + 2;
@@ -75,16 +75,16 @@ public class Day3 {
         }
 
         void onNonDigit() {
-            for (int i = touched.nextSetBit(0); i >= 0; i = touched.nextSetBit(i + 1)) {
-                List<Integer> set = touching.computeIfAbsent(i, k -> new ArrayList<>());
+            for (int i = touchedByCurrent.nextSetBit(0); i >= 0; i = touchedByCurrent.nextSetBit(i + 1)) {
+                List<Integer> set = touchedSymbols.computeIfAbsent(i, k -> new ArrayList<>());
                 set.add(currentNumber);
             }
             currentNumber = 0;
-            touched.clear();
+            touchedByCurrent.clear();
         }
 
         int partNumbers() {
-            return touching
+            return touchedSymbols
                     .values()
                     .stream()
                     .flatMapToInt(l -> l.stream().mapToInt(Integer::intValue))
@@ -92,7 +92,7 @@ public class Day3 {
         }
 
         int getGearRatios() {
-            return touching
+            return touchedSymbols
                     .values()
                     .stream()
                     .filter(l -> l.size() == 2)
@@ -100,22 +100,22 @@ public class Day3 {
                     .sum();
         }
 
-        private void mark(int x, int y) {
+        private void markIfSymbol(int x, int y) {
             int coords = flatten(x, y);
             if (symbolMap.get(coords)) {
-                touched.set(coords);
+                touchedByCurrent.set(coords);
             }
         }
 
         private void markSurrounding(int x, int y) {
-            mark(x - 1, y);
-            mark(x - 1, y - 1);
-            mark(x - 1, y + 1);
-            mark(x + 1, y);
-            mark(x + 1, y - 1);
-            mark(x + 1, y + 1);
-            mark(x, y - 1);
-            mark(x, y + 1);
+            markIfSymbol(x - 1, y);
+            markIfSymbol(x - 1, y - 1);
+            markIfSymbol(x - 1, y + 1);
+            markIfSymbol(x + 1, y);
+            markIfSymbol(x + 1, y - 1);
+            markIfSymbol(x + 1, y + 1);
+            markIfSymbol(x, y - 1);
+            markIfSymbol(x, y + 1);
         }
 
         private int flatten(int x, int y) {
