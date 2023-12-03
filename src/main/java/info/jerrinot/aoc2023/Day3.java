@@ -74,8 +74,8 @@ public class Day3 {
         private final Map<Integer, Set<Integer>> touching = new HashMap<>();
 
         CountingMap(int maxX, int maxY) {
-            this.maxX = maxX;
-            this.maxY = maxY;
+            this.maxX = maxX + 2;
+            this.maxY = maxY + 2;
         }
 
         void nonDigitOrEOL() {
@@ -98,57 +98,23 @@ public class Day3 {
             return sum;
         }
 
+        void markIfTouched(int x, int y) {
+            int coords = flattenCoords(x, y);
+            if (map.get(coords)) {
+                touched.set(coords);
+            }
+        }
+
         void digit(int x, int y, char digit) {
             currentNumber = currentNumber * 10 + Character.getNumericValue(digit);
-            int coords;
-            if (x != 0) {
-                coords = flattenCoords(x - 1, y);
-                if (map.get(coords)) {
-                    touched.set(coords);
-                }
-                if (y != 0) {
-                    coords = flattenCoords(x - 1, y - 1);
-                    if (map.get(coords)) {
-                        touched.set(coords);
-                    }
-                }
-                if (y != maxY) {
-                    coords = flattenCoords(x - 1, y + 1);
-                    if (map.get(coords)) {
-                        touched.set(coords);
-                    }
-                }
-            }
-            if (x != maxX) {
-                coords = flattenCoords(x + 1, y);
-                if (map.get(coords)) {
-                    touched.set(coords);
-                }
-                if (y != 0) {
-                    coords = flattenCoords(x + 1, y - 1);
-                    if (map.get(coords)) {
-                        touched.set(coords);
-                    }
-                }
-                if (y != maxY) {
-                    coords = flattenCoords(x + 1, y + 1);
-                    if (map.get(coords)) {
-                        touched.set(coords);
-                    }
-                }
-            }
-            if (y != 0) {
-                coords = flattenCoords(x, y - 1);
-                if (map.get(coords)) {
-                    touched.set(coords);
-                }
-            }
-            if (y != maxY) {
-                coords = flattenCoords(x, y + 1);
-                if (map.get(coords)) {
-                    touched.set(coords);
-                }
-            }
+            markIfTouched(x - 1, y);
+            markIfTouched(x - 1, y - 1);
+            markIfTouched(x - 1, y + 1);
+            markIfTouched(x + 1, y);
+            markIfTouched(x + 1, y - 1);
+            markIfTouched(x + 1, y + 1);
+            markIfTouched(x, y - 1);
+            markIfTouched(x, y + 1);
         }
 
         void onSymbolAt(int x, int y) {
@@ -156,7 +122,7 @@ public class Day3 {
         }
 
         int flattenCoords(int x, int y) {
-            return y * maxX + x;
+            return (y + 1) * maxX + (x + 1);
         }
     }
 }
