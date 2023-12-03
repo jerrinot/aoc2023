@@ -56,9 +56,11 @@ public class Day3 {
 
     static class CountingMap {
         private final BitSet symbolMap = new BitSet(); // map of all symbols
-        private final BitSet touchedByCurrent = new BitSet(); // map of symbols touched by the currently parsed number
         private final int width;
         private int currentNumber;
+        private int startingX;
+        private int startingY;
+        private int numberLen;
         private final Map<Integer, List<Integer>> touchedSymbols = new HashMap<>();  // key = symbol, value = numbers touching the symbol
 
         CountingMap(int maxX) {
@@ -70,17 +72,28 @@ public class Day3 {
         }
 
         void onDigit(int x, int y, char digit) {
+            if (numberLen == 0) {
+                startingX = x;
+                startingY = y;
+            }
+            numberLen++;
             currentNumber = currentNumber * 10 + Character.getNumericValue(digit);
-            markSurrounding(x, y);
         }
 
         void onNonDigit() {
-            for (int i = touchedByCurrent.nextSetBit(0); i >= 0; i = touchedByCurrent.nextSetBit(i + 1)) {
-                List<Integer> set = touchedSymbols.computeIfAbsent(i, k -> new ArrayList<>());
-                set.add(currentNumber);
+            if (numberLen == 0) {
+                return;
             }
+            for (int x = startingX - 1; x < startingX + numberLen + 1; x++) {
+                for (int y = startingY - 1; y < startingY + 2; y++) {
+                    int coord = flatten(x, y);
+                    if (symbolMap.get(coord)) {
+                        touchedSymbols.computeIfAbsent(coord, k -> new ArrayList<>()).add(currentNumber);
+                    }
+                }
+            }
+            numberLen = 0;
             currentNumber = 0;
-            touchedByCurrent.clear();
         }
 
         int partNumbers() {
@@ -98,24 +111,6 @@ public class Day3 {
                     .filter(l -> l.size() == 2)
                     .mapToInt(l -> l.get(0) * l.get(1))
                     .sum();
-        }
-
-        private void markIfSymbol(int x, int y) {
-            int coords = flatten(x, y);
-            if (symbolMap.get(coords)) {
-                touchedByCurrent.set(coords);
-            }
-        }
-
-        private void markSurrounding(int x, int y) {
-            markIfSymbol(x - 1, y);
-            markIfSymbol(x - 1, y - 1);
-            markIfSymbol(x - 1, y + 1);
-            markIfSymbol(x + 1, y);
-            markIfSymbol(x + 1, y - 1);
-            markIfSymbol(x + 1, y + 1);
-            markIfSymbol(x, y - 1);
-            markIfSymbol(x, y + 1);
         }
 
         private int flatten(int x, int y) {
