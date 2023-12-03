@@ -70,7 +70,7 @@ public class Day3 {
         private final BitSet touched = new BitSet();
         private final int maxX;
         private int currentNumber;
-        private final Map<Integer, Set<Integer>> touching = new HashMap<>();
+        private final Map<Integer, List<Integer>> touching = new HashMap<>();
 
         CountingMap(int maxX) {
             this.maxX = maxX + 2;
@@ -78,7 +78,7 @@ public class Day3 {
 
         void nonDigitOrEOL() {
             for (int i = touched.nextSetBit(0); i >= 0; i = touched.nextSetBit(i + 1)) {
-                Set<Integer> set = touching.computeIfAbsent(i, k -> new HashSet<>());
+                List<Integer> set = touching.computeIfAbsent(i, k -> new ArrayList<>());
                 set.add(currentNumber);
             }
             currentNumber = 0;
@@ -87,7 +87,7 @@ public class Day3 {
 
         int sum() {
             int sum = 0;
-            for (Map.Entry<Integer, Set<Integer>> entry : touching.entrySet()) {
+            for (Map.Entry<Integer, List<Integer>> entry : touching.entrySet()) {
                 if (entry.getValue().size() == 2) {
                     // multiply
                     sum += entry.getValue().stream().reduce(1, (a, b) -> a * b);
