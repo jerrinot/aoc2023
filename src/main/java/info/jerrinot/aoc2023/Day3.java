@@ -59,7 +59,7 @@ public class Day3 {
         private final BitSet touched = new BitSet(); // map of symbols touched by the currently parsed number
         private final int width;
         private int currentNumber;
-        private final Map<Integer, List<Integer>> touching = new HashMap<>();  // key = symbol index, value =  numbers touching the symbol
+        private final Map<Integer, List<Integer>> touching = new HashMap<>();  // key = symbol, value = numbers touching the symbol
 
         CountingMap(int maxX) {
             this.width = maxX + 2;
@@ -118,7 +118,7 @@ public class Day3 {
             mark(x, y + 1);
         }
 
-        int flatten(int x, int y) {
+        private int flatten(int x, int y) {
             return (y + 1) * width + (x + 1);
         }
     }
