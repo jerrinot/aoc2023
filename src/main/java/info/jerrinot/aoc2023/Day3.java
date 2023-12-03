@@ -8,24 +8,27 @@ import java.util.function.Predicate;
 public class Day3 {
     public static void main(String[] args) throws Exception {
         List<String> strings = Files.readAllLines(Path.of(Day1.class.getClassLoader().getResource("3.txt").toURI()));
-        CountingMap countingMap = buildSymbolMap(strings, Day3::isGearSymbol);
-        for (int y = 0; y < strings.size(); y++) {
-            String s = strings.get(y);
-            scanLine(countingMap, y, s);
-        }
-        System.out.println("Part2: " + countingMap.sum());
+        CountingMap countingMap = newSymbolMap(strings, Day3::isSymbol);
+        System.out.println("Part1: " + countingMap.partNumbers());
+
+        countingMap = newSymbolMap(strings, Day3::isGearSymbol);
+        System.out.println("Part2: " + countingMap.getGearRatios());
     }
 
-    private static CountingMap buildSymbolMap(List<String> strings, Predicate<Character> symbolPredicate) {
+    private static CountingMap newSymbolMap(List<String> strings, Predicate<Character> symbolPredicate) {
         CountingMap countingMap = new CountingMap(strings.get(0).length());
         for (int y = 0; y < strings.size(); y++) {
             String s = strings.get(y);
             for (int x = 0; x < s.length(); x++) {
                 char c = s.charAt(x);
                 if (symbolPredicate.test(c)) {
-                    countingMap.onSymbolAt(x, y);
+                    countingMap.onSymbol(x, y);
                 }
             }
+        }
+        for (int y = 0; y < strings.size(); y++) {
+            String s = strings.get(y);
+            scanLine(countingMap, y, s);
         }
         return countingMap;
     }
@@ -34,16 +37,16 @@ public class Day3 {
         for (int x = 0; x < line.length(); x++) {
             char ch = line.charAt(x);
             if (Character.isDigit(ch)) {
-                map.digit(x, y, ch);
+                map.onDigit(x, y, ch);
             } else {
-                map.nonDigitOrEOL();
+                map.onNonDigit();
             }
         }
-        map.nonDigitOrEOL();
+        map.onNonDigit();
     }
 
 
-    static boolean isSymbolAt(char ch) {
+    static boolean isSymbol(char ch) {
         return ch != '.' && !Character.isDigit(ch);
     }
 
@@ -52,17 +55,26 @@ public class Day3 {
     }
 
     static class CountingMap {
-        private final BitSet map = new BitSet();
-        private final BitSet touched = new BitSet();
-        private final int maxX;
+        private final BitSet symbolMap = new BitSet(); // map of all symbols
+        private final BitSet touched = new BitSet(); // map of symbols touched by the currently parsed number
+        private final int width;
         private int currentNumber;
-        private final Map<Integer, List<Integer>> touching = new HashMap<>();
+        private final Map<Integer, List<Integer>> touching = new HashMap<>();  // key = symbol index, value =  numbers touching the symbol
 
         CountingMap(int maxX) {
-            this.maxX = maxX + 2;
+            this.width = maxX + 2;
         }
 
-        void nonDigitOrEOL() {
+        void onSymbol(int x, int y) {
+            symbolMap.set(flatten(x, y));
+        }
+
+        void onDigit(int x, int y, char digit) {
+            currentNumber = currentNumber * 10 + Character.getNumericValue(digit);
+            markSurrounding(x, y);
+        }
+
+        void onNonDigit() {
             for (int i = touched.nextSetBit(0); i >= 0; i = touched.nextSetBit(i + 1)) {
                 List<Integer> set = touching.computeIfAbsent(i, k -> new ArrayList<>());
                 set.add(currentNumber);
@@ -71,42 +83,43 @@ public class Day3 {
             touched.clear();
         }
 
-        int sum() {
-            int sum = 0;
-            for (Map.Entry<Integer, List<Integer>> entry : touching.entrySet()) {
-                if (entry.getValue().size() == 2) {
-                    // multiply
-                    sum += entry.getValue().stream().reduce(1, (a, b) -> a * b);
-                }
-            }
-            return sum;
+        int partNumbers() {
+            return touching
+                    .values()
+                    .stream()
+                    .flatMapToInt(l -> l.stream().mapToInt(Integer::intValue))
+                    .sum();
         }
 
-        void markIfTouched(int x, int y) {
-            int coords = flattenCoords(x, y);
-            if (map.get(coords)) {
+        int getGearRatios() {
+            return touching
+                    .values()
+                    .stream()
+                    .filter(l -> l.size() == 2)
+                    .mapToInt(l -> l.get(0) * l.get(1))
+                    .sum();
+        }
+
+        private void mark(int x, int y) {
+            int coords = flatten(x, y);
+            if (symbolMap.get(coords)) {
                 touched.set(coords);
             }
         }
 
-        void digit(int x, int y, char digit) {
-            currentNumber = currentNumber * 10 + Character.getNumericValue(digit);
-            markIfTouched(x - 1, y);
-            markIfTouched(x - 1, y - 1);
-            markIfTouched(x - 1, y + 1);
-            markIfTouched(x + 1, y);
-            markIfTouched(x + 1, y - 1);
-            markIfTouched(x + 1, y + 1);
-            markIfTouched(x, y - 1);
-            markIfTouched(x, y + 1);
+        private void markSurrounding(int x, int y) {
+            mark(x - 1, y);
+            mark(x - 1, y - 1);
+            mark(x - 1, y + 1);
+            mark(x + 1, y);
+            mark(x + 1, y - 1);
+            mark(x + 1, y + 1);
+            mark(x, y - 1);
+            mark(x, y + 1);
         }
 
-        void onSymbolAt(int x, int y) {
-            map.set(flattenCoords(x, y));
-        }
-
-        int flattenCoords(int x, int y) {
-            return (y + 1) * maxX + (x + 1);
+        int flatten(int x, int y) {
+            return (y + 1) * width + (x + 1);
         }
     }
 }
