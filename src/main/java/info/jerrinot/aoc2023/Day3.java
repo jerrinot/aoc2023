@@ -7,44 +7,24 @@ import java.util.*;
 public class Day3 {
     public static void main(String[] args) throws Exception {
         List<String> strings = Files.readAllLines(Path.of(Day1.class.getClassLoader().getResource("3.txt").toURI()));
-//        SymbolMap map = new SymbolMap(strings.get(0).length(), strings.size());
-//        for (int y = 0; y < strings.size(); y++) {
-//            String s = strings.get(y);
-//            for (int x = 0; x < s.length(); x++) {
-//                char c = s.charAt(x);
-//                if (isSymbolAt(c)) {
-//                    System.out.println("onSymbolAt(" + x + ", " + y + ");");
-//                    map.onSymbolAt(x, y);
-//                }
-//            }
-//        }
-//
-//        int sum = 0;
-//        for (int y = 0; y < strings.size(); y++) {
-//            String s = strings.get(y);
-//            sum += sumOfTouchingNumbers(map, y, s);
-//        }
-//        System.out.println("Part1: " + sum);
-
         CountingMap countingMap = new CountingMap(strings.get(0).length());
         for (int y = 0; y < strings.size(); y++) {
             String s = strings.get(y);
             for (int x = 0; x < s.length(); x++) {
                 char c = s.charAt(x);
                 if (isGearSymbol(c)) {
-                    System.out.println("onSymbolAt(" + x + ", " + y + ");");
                     countingMap.onSymbolAt(x, y);
                 }
             }
         }
         for (int y = 0; y < strings.size(); y++) {
             String s = strings.get(y);
-            sumOfGears(countingMap, y, s);
+            scanLine(countingMap, y, s);
         }
         System.out.println("Part2: " + countingMap.sum());
     }
 
-    static void sumOfGears(CountingMap map, int y, String line) {
+    static void scanLine(CountingMap map, int y, String line) {
         for (int x = 0; x < line.length(); x++) {
             char ch = line.charAt(x);
             if (Character.isDigit(ch)) {
