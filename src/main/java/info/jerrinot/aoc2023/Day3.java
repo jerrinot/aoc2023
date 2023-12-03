@@ -3,25 +3,31 @@ package info.jerrinot.aoc2023;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class Day3 {
     public static void main(String[] args) throws Exception {
         List<String> strings = Files.readAllLines(Path.of(Day1.class.getClassLoader().getResource("3.txt").toURI()));
-        CountingMap countingMap = new CountingMap(strings.get(0).length());
-        for (int y = 0; y < strings.size(); y++) {
-            String s = strings.get(y);
-            for (int x = 0; x < s.length(); x++) {
-                char c = s.charAt(x);
-                if (isGearSymbol(c)) {
-                    countingMap.onSymbolAt(x, y);
-                }
-            }
-        }
+        CountingMap countingMap = buildSymbolMap(strings, Day3::isGearSymbol);
         for (int y = 0; y < strings.size(); y++) {
             String s = strings.get(y);
             scanLine(countingMap, y, s);
         }
         System.out.println("Part2: " + countingMap.sum());
+    }
+
+    private static CountingMap buildSymbolMap(List<String> strings, Predicate<Character> symbolPredicate) {
+        CountingMap countingMap = new CountingMap(strings.get(0).length());
+        for (int y = 0; y < strings.size(); y++) {
+            String s = strings.get(y);
+            for (int x = 0; x < s.length(); x++) {
+                char c = s.charAt(x);
+                if (symbolPredicate.test(c)) {
+                    countingMap.onSymbolAt(x, y);
+                }
+            }
+        }
+        return countingMap;
     }
 
     static void scanLine(CountingMap map, int y, String line) {
