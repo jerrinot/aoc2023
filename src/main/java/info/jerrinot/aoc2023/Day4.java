@@ -53,9 +53,9 @@ public class Day4 {
 
         void addNewCard(int n, int winningCount) {
             this.winningCount[n] = winningCount;
-            copies[n]++;
+            int toAdd = ++copies[n];
             for (int i = n + 1; i < winningCount + n + 1; i++) {
-                copies[i] += copies[n];
+                copies[i] += toAdd;
             }
         }
 
