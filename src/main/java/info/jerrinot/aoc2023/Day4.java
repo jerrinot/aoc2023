@@ -11,10 +11,10 @@ public class Day4 {
 
         int totalScore = 0;
         Set<Integer> winningNumbers = new HashSet<>();
-        Deck deck = new Deck();
-        for (String s : strings) {
+        Deck deck = new Deck(strings.size());
+        for (int i = 0; i < strings.size(); i++) {
             winningNumbers.clear();
-            String[] numbers = s.split(":");
+            String[] numbers = strings.get(i).split(":");
             String[] data = numbers[1].split("\\|");
 
             Arrays.stream(data[0].split(" "))
@@ -24,12 +24,11 @@ public class Day4 {
                     .forEach(winningNumbers::add);
 
             long winningCount = getWinningCount(data, winningNumbers);
-            deck.addNewCard((int) winningCount);
+            deck.addNewCard(i, (int) winningCount);
             int gameScore = winningCount == 0 ? 0 : 1 << (winningCount - 1);
             totalScore += gameScore;
         }
         System.out.println("Part1: " + totalScore);
-        deck.processCards();
         int totalCards = deck.countCards();
         System.out.println("Part2: " + totalCards);
     }
@@ -44,27 +43,24 @@ public class Day4 {
     }
 
     static class Deck {
-        List<Integer> winningCount = new ArrayList<>();
-        List<Integer> copies = new ArrayList<>();
+        int[] winningCount;
+        int[] copies;
 
-        void addNewCard(int winningCount) {
-            this.winningCount.add(winningCount);
-            copies.add(1);
+        private Deck(int size) {
+            winningCount = new int[size];
+            copies = new int[size];
         }
 
-        void processCards() {
-            for (int i = 0; i < winningCount.size(); i++) {
-                int cardWins = winningCount.get(i);
-                int cardCopies = copies.get(i);
-                for (int y = 0; y < cardWins; y++) {
-                    int card = i + y + 1;
-                    copies.set(card, copies.get(card) + cardCopies);
-                }
+        void addNewCard(int n, int winningCount) {
+            this.winningCount[n] = winningCount;
+            copies[n]++;
+            for (int i = n + 1; i < winningCount + n + 1; i++) {
+                copies[i] += copies[n];
             }
         }
 
         int countCards() {
-            return copies.stream().mapToInt(Integer::intValue).sum();
+            return Arrays.stream(copies).sum();
         }
     }
 }
