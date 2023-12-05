@@ -34,7 +34,19 @@ public class Day5 {
             lastMapper = mapper;
             mapper = new Mapper();
         }
-        seeds.stream().map(firstMapper::map).mapToLong(Long::longValue).min().ifPresent(System.out::println);
+
+        System.out.println("Part 1 " + seeds.stream().map(firstMapper::map).mapToLong(Long::longValue).min().getAsLong());
+        long min = Long.MAX_VALUE;
+        for (int i = 0; i < seeds.size(); i += 2) {
+            System.out.println("Mapping " + i + " out of " + seeds.size());
+            long start = seeds.get(i);
+            long range = seeds.get(i + 1);
+            for (long y = start; y < start + range; y++) {
+                min = Math.min(min, firstMapper.map(y));
+            }
+        }
+        System.out.println(min);
+
     }
 
     static class Mapper {
