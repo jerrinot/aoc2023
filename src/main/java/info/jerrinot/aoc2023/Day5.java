@@ -5,22 +5,43 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 
 public class Day5 {
     public static void main(String[] args) throws Exception {
-        List<String> strings = Files.readAllLines(Path.of(Day1.class.getClassLoader().getResource("5.txt").toURI()));
+        var strings = Files.readAllLines(Path.of(Day1.class.getClassLoader().getResource("5.txt").toURI()));
 
-        List<Long> seeds = new ArrayList<>();
-        Arrays.stream(strings.get(0).split(":")[1].split(" "))
+        var seeds = Arrays.stream(strings.get(0).split(":")[1].split(" "))
                 .filter(s -> !s.isEmpty())
-                .forEach(s -> seeds.add(Long.parseLong(s.trim())));
+                .map(String::trim)
+                .map(Long::parseLong)
+                .toList();
+        var intervalMappers = toMappers(strings);
 
-        Mapper mapper = new Mapper();
-        Mapper firstMapper = mapper;
-        Mapper lastMapper = new Mapper(); // dummy to avoid null checks inside the loop
+        // part 1
+        var intervals = seeds.stream().map(i -> new Interval(i, i + 1)).toList();
+        for (IntervalMapper intervalMapper : intervalMappers) {
+            intervals = intervalMapper.map(intervals);
+        }
+        System.out.println("Part 1 " + intervals.stream().mapToLong(i -> i.from).min().getAsLong());
+
+        // part 2
+        intervals = IntStream.range(0, seeds.size())
+                .filter(i -> i % 2 == 0)
+                .mapToObj(i -> new Interval(seeds.get(i), seeds.get(i) + seeds.get(i + 1)))
+                .toList();
+        for (IntervalMapper intervalMapper : intervalMappers) {
+            intervals = intervalMapper.map(intervals);
+        }
+        System.out.println("Part 2 " + intervals.stream().mapToLong(i -> i.from).min().getAsLong());
+    }
+
+    private static List<IntervalMapper> toMappers(List<String> strings) {
+        var intervalMappers = new ArrayList<IntervalMapper>();
         for (int i = 2; i < strings.size(); i++) {
+            var intervalMapper = new IntervalMapper();
             for (i++; i < strings.size(); i++) {
-                String line = strings.get(i);
+                var line = strings.get(i);
                 if (line.isEmpty()) {
                     break;
                 }
@@ -28,56 +49,90 @@ public class Day5 {
                 long dstStart = Long.parseLong(data[0]);
                 long srcStart = Long.parseLong(data[1]);
                 long rangeLen = Long.parseLong(data[2]);
-                mapper.addMapping(dstStart, srcStart, rangeLen);
+                intervalMapper = intervalMapper.withInterval(srcStart, srcStart + rangeLen, dstStart - srcStart);
             }
-            lastMapper.setNext(mapper);
-            lastMapper = mapper;
-            mapper = new Mapper();
+            intervalMappers.add(intervalMapper);
         }
-
-        System.out.println("Part 1 " + seeds.stream().map(firstMapper::map).mapToLong(Long::longValue).min().getAsLong());
-        long min = Long.MAX_VALUE;
-        for (int i = 0; i < seeds.size(); i += 2) {
-            System.out.println("Mapping " + i + " out of " + seeds.size());
-            long start = seeds.get(i);
-            long range = seeds.get(i + 1);
-            for (long y = start; y < start + range; y++) {
-                min = Math.min(min, firstMapper.map(y));
-            }
-        }
-        System.out.println(min);
-
+        return intervalMappers;
     }
 
-    static class Mapper {
-        List<Long> rangeLen = new ArrayList<>();
-        List<Long> start = new ArrayList<>();
-        List<Long> offset = new ArrayList<>();
-        Mapper next;
+    static class IntervalMapper {
+        final List<IntervalMapping> mappings;
 
-        void addMapping(long dstStart, long srcStart, long rangeLen) {
-            this.start.add(srcStart);
-            this.offset.add(dstStart - srcStart);
-            this.rangeLen.add(rangeLen);
+        IntervalMapper() {
+            mappings = new ArrayList<>();
+            mappings.add(new IntervalMapping(new Interval(0, Long.MAX_VALUE), 0));
         }
 
-
-        long map(long src) {
-            return next == null ? localRemap(src) : next.map(localRemap(src));
+        private IntervalMapper(List<IntervalMapping> mappings) {
+            this.mappings = mappings;
         }
 
-        void setNext(Mapper next) {
-            this.next = next;
-        }
-
-        private long localRemap(long src) {
-            for (int i = 0; i < start.size(); i++) {
-                long s = start.get(i);
-                if (src >= s && src < s + rangeLen.get(i)) {
-                    return src + offset.get(i);
+        IntervalMapper withInterval(long from, long to, long offset) {
+            var newMappings = new ArrayList<IntervalMapping>();
+            var newInterval = new Interval(from, to);
+            for (IntervalMapping currentInterval : mappings) {
+                var intersection = currentInterval.interval.intersect(newInterval);
+                if (intersection == null) {
+                    // no overlap
+                    newMappings.add(currentInterval);
+                } else if (intersection.from == currentInterval.interval.from && intersection.to == currentInterval.interval.to) {
+                    // exact overlap
+                    newMappings.add(IntervalMapping.of(currentInterval.interval.from, currentInterval.interval.to, offset));
+                } else if (intersection.from == currentInterval.interval.from) {
+                    // intersect | original suffix
+                    newMappings.add(IntervalMapping.of(intersection.from, intersection.to, offset));
+                    newMappings.add(IntervalMapping.of(intersection.to + 1, currentInterval.interval.to, currentInterval.offset));
+                } else if (intersection.to == currentInterval.interval.to) {
+                    // original prefix | intersect
+                    newMappings.add(IntervalMapping.of(currentInterval.interval.from, intersection.from - 1, currentInterval.offset));
+                    IntervalMapping newMapping = IntervalMapping.of(intersection.from, intersection.to, offset);
+                    newMappings.add(newMapping);
+                } else {
+                    // original prefix | intersect | original suffix
+                    newMappings.add(IntervalMapping.of(currentInterval.interval.from, intersection.from - 1, currentInterval.offset));
+                    newMappings.add(IntervalMapping.of(intersection.from, intersection.to, offset));
+                    newMappings.add(IntervalMapping.of(intersection.to + 1, currentInterval.interval.to, currentInterval.offset));
                 }
             }
-            return src;
+            return new IntervalMapper(newMappings);
+        }
+
+        List<Interval> map(List<Interval> intervals) {
+            var result = new ArrayList<Interval>();
+            for (Interval interval : intervals) {
+                result.addAll(map(interval));
+            }
+            return result;
+        }
+
+        private List<Interval> map(Interval interval) {
+            var result = new ArrayList<Interval>();
+            for (IntervalMapping mapping : mappings) {
+                var intersection = mapping.interval.intersect(interval);
+                if (intersection == null) {
+                    continue;
+                }
+                result.add(new Interval(intersection.from + mapping.offset, intersection.to + mapping.offset));
+            }
+            return result;
+        }
+    }
+
+    record IntervalMapping(Interval interval, long offset) {
+        static IntervalMapping of(long from, long to, long offset) {
+            return new IntervalMapping(new Interval(from, to), offset);
+        }
+    }
+
+    record Interval(long from, long to) {
+        Interval intersect(Interval other) {
+            long intersectFrom = Math.max(from, other.from);
+            long intersectTo = Math.min(to, other.to);
+            if (intersectFrom >= intersectTo) {
+                return null;
+            }
+            return new Interval(intersectFrom, intersectTo);
         }
     }
 }
