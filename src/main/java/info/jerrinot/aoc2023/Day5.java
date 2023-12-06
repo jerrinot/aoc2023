@@ -13,27 +13,28 @@ public class Day5 {
 
         var seeds = Arrays.stream(strings.get(0).split(":")[1].split(" "))
                 .filter(s -> !s.isEmpty())
-                .map(String::trim)
                 .map(Long::parseLong)
                 .toList();
         var intervalMappers = toMappers(strings);
 
         // part 1
-        var intervals = seeds.stream().map(i -> new Interval(i, i + 1)).toList();
-        for (IntervalMapper intervalMapper : intervalMappers) {
-            intervals = intervalMapper.map(intervals);
-        }
-        System.out.println("Part 1 " + intervals.stream().mapToLong(i -> i.from).min().getAsLong());
-
-        // part 2
-        intervals = IntStream.range(0, seeds.size())
-                .filter(i -> i % 2 == 0)
-                .mapToObj(i -> new Interval(seeds.get(i), seeds.get(i) + seeds.get(i + 1)))
+        var intervals = seeds.stream()
+                .map(i -> new Interval(i, i + 1))
                 .toList();
         for (IntervalMapper intervalMapper : intervalMappers) {
             intervals = intervalMapper.map(intervals);
         }
-        System.out.println("Part 2 " + intervals.stream().mapToLong(i -> i.from).min().getAsLong());
+        System.out.println("Part 1: " + intervals.stream().mapToLong(i -> i.from).min().getAsLong());
+
+        // part 2
+        intervals = IntStream.range(0, seeds.size())
+                .filter(i -> i % 2 == 0)
+                .mapToObj(i -> new Interval(seeds.get(i), seeds.get(i) + seeds.get(i + 1) + 1))
+                .toList();
+        for (IntervalMapper intervalMapper : intervalMappers) {
+            intervals = intervalMapper.map(intervals);
+        }
+        System.out.println("Part 2: " + intervals.stream().mapToLong(i -> i.from).min().getAsLong());
     }
 
     private static List<IntervalMapper> toMappers(List<String> strings) {
