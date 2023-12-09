@@ -25,20 +25,15 @@ public class Day9 {
     private static Prediction predict(List<Integer> numbers) {
         int last = 0;
         var firstStack = new Stack<Integer>();
-        List<Integer> nextLine = new ArrayList<>();
+
         do {
-            for (int i = 1; i < numbers.size(); i++) {
-                int nextNumber = numbers.get(i) - numbers.get(i - 1);
-                nextLine.add(nextNumber);
-            }
             last += numbers.get(numbers.size() - 1);
             firstStack.push(numbers.get(0));
-
-            // swap numbers and nextLine, so we can avoid allocations
-            var tmp = numbers;
-            tmp.clear();
-            numbers = nextLine;
-            nextLine = tmp;
+            for (int i = 1; i < numbers.size(); i++) {
+                int nextNumber = numbers.get(i) - numbers.get(i - 1);
+                numbers.set(i - 1, nextNumber);
+            }
+            numbers.remove(numbers.size() - 1); // remove last
         } while (!numbers.stream().allMatch(n -> n == 0));
 
         int first = 0;
