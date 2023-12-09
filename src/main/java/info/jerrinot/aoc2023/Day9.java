@@ -1,18 +1,13 @@
 package info.jerrinot.aoc2023;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Stack;
+import java.nio.file.*;
+import java.util.*;
 
 import static java.util.stream.Collectors.toCollection;
 
 public class Day9 {
     public static void main(String[] args) throws Exception {
         var strings = Files.readAllLines(Path.of(Day8.class.getClassLoader().getResource("9.txt").toURI()));
-
         var predictionSum = new Prediction(0, 0);
         for (String s : strings) {
             var seq = parseSequence(s);
