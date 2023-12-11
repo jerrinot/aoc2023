@@ -2,6 +2,7 @@ package info.jerrinot.aoc2023;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeSet;
 
@@ -22,7 +23,7 @@ public class Day11 {
     public static void main(String[] args) throws Exception {
         var strings = Files.readAllLines(Path.of(Day8.class.getClassLoader().getResource("11.txt").toURI()));
 
-        var galaxies = new TreeSet<Integer>();
+        var galaxies = new ArrayList<Integer>();
         var yExpansionsPoints = new TreeSet<Integer>();
         for (int y = 0; y < strings.size(); y++) {
             String string = strings.get(y);
@@ -63,11 +64,12 @@ public class Day11 {
         return xExpansionPoints;
     }
 
-    private static long sumDistances(TreeSet<Integer> galaxies, int width, TreeSet<Integer> xExpansions, TreeSet<Integer> yExpansions, int growFactor) {
+    private static long sumDistances(List<Integer> galaxies, int width, TreeSet<Integer> xExpansions, TreeSet<Integer> yExpansions, int growFactor) {
         long sum = 0;
-        for (int first : galaxies) {
-            var seconds = galaxies.tailSet(first, false);
-            for (Integer second : seconds) {
+        for (int firstIndex = 0; firstIndex < galaxies.size() - 1; firstIndex++) {
+            int first = galaxies.get(firstIndex);
+            for (int secondIndex = firstIndex + 1; secondIndex < galaxies.size(); secondIndex++) {
+                int second = galaxies.get(secondIndex);
                 sum += distanceBetween(first, second, width, xExpansions, yExpansions, growFactor);
             }
         }
